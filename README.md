@@ -185,26 +185,26 @@ SDK 对外归一化输出使用下划线字段，适合直接落库，例如：
 
 类型说明文件：
 
-- `Hlw\Collect\Types\UserInfo`：用户信息字段类型，也是 `toUserInfo()` 返回的用户对象类型
+- `Hlw\Collect\Types\UserInfoType`：用户信息字段类型，也是 `toUserInfo()` 返回的用户对象类型
 - `Hlw\Collect\Types\FeedItemType`：作品信息字段类型
 
 运行时查看字段类型：
 
 ```php
-use Hlw\Collect\Types\UserInfo;
+use Hlw\Collect\Types\UserInfoType;
 use Hlw\Collect\Types\FeedItemType;
 
-$userSchema = UserInfo::schema();
+$userSchema = UserInfoType::schema();
 $feedSchema = FeedItemType::schema();
 ```
 
 PHPStan/Psalm 中也可以导入数组类型：
 
 ```php
-use Hlw\Collect\Types\UserInfo;
+use Hlw\Collect\Types\UserInfoType;
 use Hlw\Collect\Types\FeedItemType;
 
-/** @phpstan-import-type UserInfoArray from UserInfo */
+/** @phpstan-import-type UserInfoArray from UserInfoType */
 /** @phpstan-import-type FeedItemArray from FeedItemType */
 ```
 
@@ -242,7 +242,7 @@ src/
     mini/
     support/
   types/
-    UserInfo.php
+    UserInfoType.php
     FeedItemType.php
   request/
 tests/

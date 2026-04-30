@@ -44,7 +44,7 @@ use JsonSerializable;
  *     verified: bool
  * }
  */
-final class UserInfo implements JsonSerializable
+final class UserInfoType implements JsonSerializable
 {
     public const TYPE = 'user';
 

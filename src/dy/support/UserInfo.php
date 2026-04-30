@@ -3,8 +3,8 @@
 namespace Hlw\Collect\Dy\Support;
 
 /**
- * @phpstan-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
- * @psalm-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
+ * @phpstan-import-type UserInfoArray from \Hlw\Collect\Types\UserInfoType
+ * @psalm-import-type UserInfoArray from \Hlw\Collect\Types\UserInfoType
  */
 class UserInfo
 {

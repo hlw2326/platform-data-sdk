@@ -118,16 +118,16 @@ $normalizedFeedTotalKeys = ['like_count', 'comment_count', 'share_count', 'colle
 $normalizedAuthorKeys = ['user_id', 'sec_user_id', 'display_id', 'nickname', 'avatar_url'];
 
 assert_true(!is_file(__DIR__ . '/../src/Collect.php'), 'Collect.php 应该已删除');
-assert_true(is_file(__DIR__ . '/../src/types/UserInfo.php'), 'UserInfo 对象类型文件缺失');
-assert_true(!is_file(__DIR__ . '/../src/types/UserInfoType.php'), 'UserInfoType 应合并到 UserInfo.php');
+assert_true(!is_file(__DIR__ . '/../src/types/UserInfo.php'), 'UserInfo.php 应改名为 UserInfoType.php');
+assert_true(is_file(__DIR__ . '/../src/types/UserInfoType.php'), 'UserInfoType 类型文件缺失');
 assert_true(is_file(__DIR__ . '/../src/types/FeedItemType.php'), 'FeedItemType 类型文件缺失');
-require __DIR__ . '/../src/types/UserInfo.php';
+require __DIR__ . '/../src/types/UserInfoType.php';
 require __DIR__ . '/../src/types/FeedItemType.php';
-assert_true(Hlw\Collect\Types\UserInfo::TYPE === 'user', 'UserInfo TYPE 失败');
+assert_true(Hlw\Collect\Types\UserInfoType::TYPE === 'user', 'UserInfoType TYPE 失败');
 assert_true(Hlw\Collect\Types\FeedItemType::TYPE === 'feed', 'FeedItemType TYPE 失败');
-assert_keys(Hlw\Collect\Types\UserInfo::schema(), $normalizedUserKeys, 'UserInfo schema 字段不一致');
+assert_keys(Hlw\Collect\Types\UserInfoType::schema(), $normalizedUserKeys, 'UserInfoType schema 字段不一致');
 assert_keys(Hlw\Collect\Types\FeedItemType::schema(), $normalizedFeedKeys, 'FeedItemType schema 字段不一致');
-assert_keys(Hlw\Collect\Types\UserInfo::schema()['total'], $normalizedUserTotalKeys, 'UserInfo total schema 字段不一致');
+assert_keys(Hlw\Collect\Types\UserInfoType::schema()['total'], $normalizedUserTotalKeys, 'UserInfoType total schema 字段不一致');
 assert_keys(Hlw\Collect\Types\FeedItemType::schema()['total'], $normalizedFeedTotalKeys, 'FeedItemType total schema 字段不一致');
 assert_keys(Hlw\Collect\Types\FeedItemType::schema()['author'], $normalizedAuthorKeys, 'FeedItemType author schema 字段不一致');
 
@@ -206,7 +206,7 @@ assert_true($liveResponse->raw()['data']['user_profile']['base_info']['nickname'
 $liveArray = $liveResponse->toArray();
 $liveInfo = $liveResponse->toUserInfo();
 assert_true($liveArray['nickname'] === 'nick' && $liveArray['platform'] === 'dy', 'Live toArray 失败');
-assert_true($liveInfo instanceof Hlw\Collect\Types\UserInfo, 'Live toUserInfo 应返回 UserInfo 对象');
+assert_true($liveInfo instanceof Hlw\Collect\Types\UserInfoType, 'Live toUserInfo 应返回 UserInfoType 对象');
 assert_true($liveInfo->nickname === 'nick' && $liveInfo->platform === 'dy', 'Live toUserInfo 属性访问失败');
 assert_true($liveInfo->type === 'user', 'Live toUserInfo type 应为 user');
 assert_true($liveInfo->gender === 0, 'Live gender 女应返回 0');
@@ -269,7 +269,7 @@ $ksInfoResponse = new Hlw\Collect\Ks\Mini\User\ProfileResponse([
 ]);
 $ksInfo = $ksInfoResponse->toUserInfo();
 $ksArray = $ksInfoResponse->toArray();
-assert_true($ksInfo instanceof Hlw\Collect\Types\UserInfo, 'Ks toUserInfo 应返回 UserInfo 对象');
+assert_true($ksInfo instanceof Hlw\Collect\Types\UserInfoType, 'Ks toUserInfo 应返回 UserInfoType 对象');
 assert_true($ksInfo->nickname === 'nick' && $ksInfo->platform === 'ks', 'Ks toUserInfo 属性访问失败');
 assert_true($ksInfo->type === 'user', 'Ks toUserInfo type 应为 user');
 assert_true($ksInfo->gender === 0, 'Ks gender 女应返回 0');

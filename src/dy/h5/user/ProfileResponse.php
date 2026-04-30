@@ -3,11 +3,11 @@
 namespace Hlw\Collect\Dy\H5\User;
 
 use Hlw\Collect\Dy\Support\UserInfo as UserInfoParser;
-use Hlw\Collect\Types\UserInfo;
+use Hlw\Collect\Types\UserInfoType;
 
 /**
- * @phpstan-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
- * @psalm-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
+ * @phpstan-import-type UserInfoArray from \Hlw\Collect\Types\UserInfoType
+ * @psalm-import-type UserInfoArray from \Hlw\Collect\Types\UserInfoType
  */
 class ProfileResponse
 {
@@ -28,9 +28,9 @@ class ProfileResponse
         return is_string($this->raw) ? (UserInfoParser::parse($this->raw) ?? []) : [];
     }
 
-    public function toUserInfo(): ?UserInfo
+    public function toUserInfo(): ?UserInfoType
     {
         $data = $this->toArray();
-        return $data === [] ? null : UserInfo::fromArray($data);
+        return $data === [] ? null : UserInfoType::fromArray($data);
     }
 }
