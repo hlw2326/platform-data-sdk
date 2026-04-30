@@ -17,16 +17,17 @@ try {
     $dyLiveV1 = Dy::Live($cookies)->v1();
     $dyWebV1 = Dy::Web($cookies)->v1();
 
-    $info = $dyLiveV1->user->profile($input)->toUserInfo();
+    $info = $dyLiveV1->user->profile($input)->toArray();
     $awemeResponse = $dyWebV1->aweme->post($input);
-    $feeds = $awemeResponse->raw();
+    $aweme = $awemeResponse->raw();
     $awemeList = $awemeResponse->toArray();
 
-    echo json_encode([
-        'user' => $info,
-        'feed_count' => count($feeds['aweme_list'] ?? []),
-        'feed_list' => $awemeList,
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), PHP_EOL;
+    file_put_contents(__DIR__ . '/dy.json', json_encode([
+        'platform' => 'dy',
+        'user_info' => $info,
+        'feed_count' => count($aweme['aweme_list'] ?? []),
+        'feed_list' => array_slice($awemeList, 0, 5),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . PHP_EOL);
     
 } catch (Throwable $e) {
     fwrite(STDERR, 'ERROR: ' . $e->getMessage() . PHP_EOL);

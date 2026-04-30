@@ -7,7 +7,7 @@
 - 抖音 H5 / Live / Web 用户信息与作品列表解析
 - 快手小程序用户信息、主页作品、评论、推荐流接口
 - 分享链接解析、短链跳转、签名参数生成
-- 统一的 `toUserInfo()` / `toArray()` 输出格式
+- 用户信息支持 `toArray()` 数组输出和 `toUserInfo()` 对象输出
 
 小红书、视频号等平台接口可以按当前目录风格继续扩展。
 
@@ -59,11 +59,15 @@ $cookies = trim(file_get_contents(__DIR__ . '/tests/cookies_dy_web.text'));
 $dyLiveV1 = Dy::Live($cookies)->v1();
 $dyWebV1 = Dy::Web($cookies)->v1();
 
-$userInfo = $dyLiveV1->user->profile($input)->toUserInfo();
+$userInfo = $dyLiveV1->user->profile($input)->toArray();
+$userObject = $dyLiveV1->user->profile($input)->toUserInfo();
 $feedList = $dyWebV1->aweme->post($input, ['count' => 18])->toArray();
 
+echo $userObject->platform;
+
 print_r([
-    'user' => $userInfo,
+    'platform' => 'dy',
+    'user_info' => $userInfo,
     'feed_list' => $feedList,
 ]);
 ```
@@ -95,10 +99,14 @@ $ksV1 = Ks::Mini([
     'timeout' => 15000,
 ])->v1();
 
-$userInfo = $ksV1->user->info($input)->toUserInfo();
+$userInfo = $ksV1->user->info($input)->toArray();
+$userObject = $ksV1->user->info($input)->toUserInfo();
 $feedList = $ksV1->feed->list($input, ['count' => 12])->toArray();
 
+echo $userObject->platform;
+
 print_r([
+    'platform' => 'ks',
     'user_info' => $userInfo,
     'feed_list' => $feedList,
 ]);
@@ -120,21 +128,84 @@ SDK 对外归一化输出使用下划线字段，适合直接落库，例如：
 
 ```php
 [
-    'user_id' => '123456',
-    'avatar_url' => 'https://...',
-    'fan_count' => 100,
+    'platform' => 'dy',
+    'user_info' => [
+        'platform' => 'dy',
+        'type' => 'user',
+        'user_id' => '123456',
+        'sec_user_id' => 'MS4wLj...',
+        'display_id' => 'douyin_id',
+        'nickname' => '昵称',
+        'signature' => '简介',
+        'avatar_url' => 'https://...',
+        'gender' => 0,
+        'city' => '城市',
+        'total' => [
+            'follower_count' => 100,
+            'following_count' => 10,
+            'feed_count' => 20,
+            'liked_count' => 1000,
+        ],
+        'verified' => false,
+    ],
+    'feed_count' => 20,
     'feed_list' => [
         [
-            'id' => '作品ID',
-            'title' => '作品标题',
-            'cover' => 'https://...',
-            'video_url' => 'https://...',
-            'like_count' => 10,
-            'comment_count' => 2,
+            'platform' => 'dy',
+            'type' => 'feed',
+            'item_id' => '作品ID',
+            'desc' => '作品文案',
             'create_time' => 1700000000,
+            'duration_ms' => 12000,
+            'cover_url' => 'https://...',
+            'video_url' => 'https://...',
+            'share_url' => 'https://...',
+            'width' => 720,
+            'height' => 1280,
+            'is_top' => false,
+            'total' => [
+                'like_count' => 10,
+                'comment_count' => 2,
+                'share_count' => 1,
+                'collect_count' => 0,
+                'play_count' => 100,
+            ],
+            'author' => [
+                'user_id' => '123456',
+                'sec_user_id' => 'MS4wLj...',
+                'display_id' => 'douyin_id',
+                'nickname' => '昵称',
+                'avatar_url' => 'https://...',
+            ],
+            'tags' => [],
         ],
     ],
 ]
+```
+
+类型说明文件：
+
+- `Hlw\Collect\Types\UserInfo`：用户信息字段类型，也是 `toUserInfo()` 返回的用户对象类型
+- `Hlw\Collect\Types\FeedItemType`：作品信息字段类型
+
+运行时查看字段类型：
+
+```php
+use Hlw\Collect\Types\UserInfo;
+use Hlw\Collect\Types\FeedItemType;
+
+$userSchema = UserInfo::schema();
+$feedSchema = FeedItemType::schema();
+```
+
+PHPStan/Psalm 中也可以导入数组类型：
+
+```php
+use Hlw\Collect\Types\UserInfo;
+use Hlw\Collect\Types\FeedItemType;
+
+/** @phpstan-import-type UserInfoArray from UserInfo */
+/** @phpstan-import-type FeedItemArray from FeedItemType */
 ```
 
 ## Cookie 文件
@@ -150,8 +221,8 @@ SDK 对外归一化输出使用下划线字段，适合直接落库，例如：
 
 ```bash
 php tests/smoke.php
-php tests/debug_douyin_user.php
-php tests/debug_kuaishou_mini.php
+php tests/debug_dy.php
+php tests/debug_ks.php
 ```
 
 `smoke.php` 不依赖真实 Cookie，适合快速检查 SDK 基础功能。两个 `debug_*` 脚本会请求真实平台接口，需要提前准备 Cookie。
@@ -170,11 +241,14 @@ src/
   ks/
     mini/
     support/
+  types/
+    UserInfo.php
+    FeedItemType.php
   request/
 tests/
   smoke.php
-  debug_douyin_user.php
-  debug_kuaishou_mini.php
+  debug_dy.php
+  debug_ks.php
 ```
 
 ## 安全说明

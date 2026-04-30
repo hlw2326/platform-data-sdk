@@ -41,14 +41,17 @@ try {
 
     $profileResponse = $ksV1->user->info($input);
     $feedResponse = $ksV1->feed->list($input, ['count' => 6]);
+    $feedRaw = $feedResponse->raw();
 
-    $userInfo = $profileResponse->toUserInfo();
+    $userInfo = $profileResponse->toArray();
     $feeds = $feedResponse->toArray();
 
-    echo json_encode([
+    file_put_contents(__DIR__ . '/ks.json', json_encode([
+        'platform' => 'ks',
         'user_info' => $userInfo,
-        'feed_list' => $feeds,
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), PHP_EOL;
+        'feed_count' => count($feedRaw['feeds'] ?? $feedRaw['list'] ?? $feedRaw['photoList'] ?? []),
+        'feed_list' => array_slice($feeds, 0, 5),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . PHP_EOL);
 } catch (Throwable $e) {
     fwrite(STDERR, 'ERROR: ' . $e->getMessage() . PHP_EOL);
     exit(1);

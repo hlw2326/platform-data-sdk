@@ -3,3 +3,5 @@ tests/cookies*.txt
 tests/cookies*.text
 tests/*cookies*.txt
 tests/*cookies*.text
+tests/dy.json
+tests/ks.json

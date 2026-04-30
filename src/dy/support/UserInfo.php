@@ -2,8 +2,15 @@
 
 namespace Hlw\Collect\Dy\Support;
 
+/**
+ * @phpstan-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
+ * @psalm-import-type UserInfoArray from \Hlw\Collect\Types\UserInfo
+ */
 class UserInfo
 {
+    /**
+     * @return UserInfoArray|null
+     */
     public static function parse(string $html): ?array
     {
         if (preg_match_all('/self\.__pace_f\.push\(\[\d+,\s*"(\d+:\[.{20,})"\]\)/sU', $html, $matches)) {
@@ -96,6 +103,9 @@ class UserInfo
         return null;
     }
 
+    /**
+     * @return UserInfoArray
+     */
     private static function normalize(array $obj): array
     {
         $certLabel = '';
@@ -108,19 +118,31 @@ class UserInfo
         }
 
         return [
-            'sec_uid' => $obj['secUid'] ?? $obj['sec_uid'] ?? '',
-            'uid' => $obj['uid'] ?? '',
-            'display_id' => $obj['uniqueId'] ?? $obj['unique_id'] ?? $obj['shortId'] ?? $obj['short_id'] ?? '',
-            'nickname' => $obj['nickname'] ?? '',
-            'gender' => $obj['gender'] ?? 0,
-            'signature' => $obj['desc'] ?? $obj['signature'] ?? '',
-            'city' => $obj['city'] ?? '',
-            'avatar_url' => $obj['avatar_url'] ?? $obj['avatarUrl'] ?? $obj['avatar_thumb']['url_list'][0] ?? '',
-            'fan_count' => $obj['mplatform_followers_count'] ?? $obj['followerCount'] ?? $obj['follower_count'] ?? 0,
-            'follow_count' => $obj['followingCount'] ?? $obj['following_count'] ?? 0,
-            'photo_count' => $obj['awemeCount'] ?? $obj['aweme_count'] ?? 0,
-            'like_count' => (int)($obj['total_favorited'] ?? $obj['totalFavorited'] ?? 0),
-            'cert_label' => $certLabel,
+            'platform' => 'dy',
+            'type' => 'user',
+            'user_id' => (string)($obj['uid'] ?? $obj['id_str'] ?? $obj['id'] ?? ''),
+            'sec_user_id' => (string)($obj['secUid'] ?? $obj['sec_uid'] ?? ''),
+            'display_id' => (string)($obj['uniqueId'] ?? $obj['unique_id'] ?? $obj['shortId'] ?? $obj['short_id'] ?? $obj['display_id'] ?? ''),
+            'nickname' => (string)($obj['nickname'] ?? ''),
+            'signature' => (string)($obj['desc'] ?? $obj['signature'] ?? ''),
+            'avatar_url' => (string)($obj['avatar_url'] ?? $obj['avatarUrl'] ?? $obj['avatar_thumb']['url_list'][0] ?? ''),
+            'gender' => self::normalizeGender($obj['gender'] ?? 0),
+            'city' => (string)($obj['city'] ?? ''),
+            'total' => [
+                'follower_count' => (int)($obj['mplatform_followers_count'] ?? $obj['followerCount'] ?? $obj['follower_count'] ?? 0),
+                'following_count' => (int)($obj['followingCount'] ?? $obj['following_count'] ?? 0),
+                'feed_count' => (int)($obj['awemeCount'] ?? $obj['aweme_count'] ?? 0),
+                'liked_count' => (int)($obj['total_favorited'] ?? $obj['totalFavorited'] ?? 0),
+            ],
+            'verified' => $certLabel !== '',
         ];
+    }
+
+    private static function normalizeGender(mixed $gender): int
+    {
+        return match ((string)$gender) {
+            '1', 'M', 'm', 'male' => 1,
+            default => 0,
+        };
     }
 }

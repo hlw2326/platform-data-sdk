@@ -65,7 +65,71 @@ function assert_no_camel_keys(array $value, string $message): void
     }
 }
 
+function assert_keys(array $value, array $expected, string $message): void
+{
+    $keys = array_keys($value);
+    if ($keys !== $expected) {
+        throw new RuntimeException($message . ': ' . json_encode($keys, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+}
+
+function assert_same_keys(array $left, array $right, string $message): void
+{
+    $leftKeys = array_keys($left);
+    $rightKeys = array_keys($right);
+    if ($leftKeys !== $rightKeys) {
+        throw new RuntimeException($message . ': ' . json_encode([$leftKeys, $rightKeys], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+}
+
+$normalizedUserKeys = [
+    'platform',
+    'type',
+    'user_id',
+    'sec_user_id',
+    'display_id',
+    'nickname',
+    'signature',
+    'avatar_url',
+    'gender',
+    'city',
+    'total',
+    'verified',
+];
+$normalizedUserTotalKeys = ['follower_count', 'following_count', 'feed_count', 'liked_count'];
+$normalizedFeedKeys = [
+    'platform',
+    'type',
+    'item_id',
+    'desc',
+    'create_time',
+    'duration_ms',
+    'cover_url',
+    'video_url',
+    'share_url',
+    'width',
+    'height',
+    'is_top',
+    'total',
+    'author',
+    'tags',
+];
+$normalizedFeedTotalKeys = ['like_count', 'comment_count', 'share_count', 'collect_count', 'play_count'];
+$normalizedAuthorKeys = ['user_id', 'sec_user_id', 'display_id', 'nickname', 'avatar_url'];
+
 assert_true(!is_file(__DIR__ . '/../src/Collect.php'), 'Collect.php 应该已删除');
+assert_true(is_file(__DIR__ . '/../src/types/UserInfo.php'), 'UserInfo 对象类型文件缺失');
+assert_true(!is_file(__DIR__ . '/../src/types/UserInfoType.php'), 'UserInfoType 应合并到 UserInfo.php');
+assert_true(is_file(__DIR__ . '/../src/types/FeedItemType.php'), 'FeedItemType 类型文件缺失');
+require __DIR__ . '/../src/types/UserInfo.php';
+require __DIR__ . '/../src/types/FeedItemType.php';
+assert_true(Hlw\Collect\Types\UserInfo::TYPE === 'user', 'UserInfo TYPE 失败');
+assert_true(Hlw\Collect\Types\FeedItemType::TYPE === 'feed', 'FeedItemType TYPE 失败');
+assert_keys(Hlw\Collect\Types\UserInfo::schema(), $normalizedUserKeys, 'UserInfo schema 字段不一致');
+assert_keys(Hlw\Collect\Types\FeedItemType::schema(), $normalizedFeedKeys, 'FeedItemType schema 字段不一致');
+assert_keys(Hlw\Collect\Types\UserInfo::schema()['total'], $normalizedUserTotalKeys, 'UserInfo total schema 字段不一致');
+assert_keys(Hlw\Collect\Types\FeedItemType::schema()['total'], $normalizedFeedTotalKeys, 'FeedItemType total schema 字段不一致');
+assert_keys(Hlw\Collect\Types\FeedItemType::schema()['author'], $normalizedAuthorKeys, 'FeedItemType author schema 字段不一致');
 
 $input = 'appId=ks_wechat_small_app_2clientid=13did=wxo_a2f10b9345f4f6e89dca211c76473ec85f2dsmallAppVersion=v3.190.0{"count":12,"eid":"2059195662"}';
 $sig3 = (new Sig3(1700000000, 100, 1700000100))->generate($input);
@@ -85,9 +149,18 @@ $feed = $ks->parseFeed([
     'coverUrls' => [['url' => 'cover']],
     'mainMvUrls' => [['url' => 'video']],
     'likeCount' => 7,
+    'commentCount' => 8,
+    'forwardCount' => 9,
+    'collectCount' => 10,
+    'viewCount' => 11,
     'timestamp' => 1700000000000,
+    'duration' => 1200,
 ]);
-assert_true($feed['id'] === 'p1' && $feed['create_time'] === 1700000000 && $feed['video_url'] === 'video' && $feed['like_count'] === 7, 'parseFeed 解析失败');
+assert_true($feed['item_id'] === 'p1' && $feed['create_time'] === 1700000000 && $feed['video_url'] === 'video' && $feed['total']['like_count'] === 7, 'parseFeed 解析失败');
+assert_true($feed['type'] === 'feed', 'Ks parseFeed type 应为 feed');
+assert_keys($feed, $normalizedFeedKeys, 'Ks parseFeed 字段不一致');
+assert_keys($feed['total'], $normalizedFeedTotalKeys, 'Ks parseFeed total 字段不一致');
+assert_keys($feed['author'], $normalizedAuthorKeys, 'Ks parseFeed author 字段不一致');
 assert_true(!array_key_exists('createTime', $feed) && !array_key_exists('videoUrl', $feed) && !array_key_exists('likeCount', $feed), 'parseFeed 不应返回驼峰字段');
 assert_no_camel_keys($feed, 'parseFeed 不应返回驼峰字段');
 $dyH5V1 = Dy::H5('a=b')->v1();
@@ -112,18 +185,73 @@ assert_true(Hlw\Collect\Dy\Support\InputParser::awemeId('https://www.douyin.com/
 $liveResponse = new Hlw\Collect\Dy\Live\User\ProfileResponse([
     'data' => [
         'user_profile' => [
-            'base_info' => ['sec_uid' => 'sec', 'id_str' => 'uid', 'display_id' => 'display', 'nickname' => 'nick'],
+            'base_info' => [
+                'sec_uid' => 'sec',
+                'id_str' => 'uid',
+                'display_id' => 'display',
+                'nickname' => 'nick',
+                'signature' => 'bio',
+                'gender' => 2,
+                'city' => 'city',
+                'avatar_thumb' => ['url_list' => ['avatar']],
+            ],
             'follow_info' => ['follower_count' => 1, 'following_count' => 2],
+            'aweme_count' => 3,
+            'total_favorited' => 4,
+            'auth_info' => ['verify_content' => 'verified'],
         ],
     ],
 ]);
 assert_true($liveResponse->raw()['data']['user_profile']['base_info']['nickname'] === 'nick', 'Live raw 失败');
-assert_true($liveResponse->toUserInfo()['nickname'] === 'nick', 'Live toUserInfo 失败');
-assert_no_camel_keys($liveResponse->toUserInfo(), 'Live toUserInfo 不应返回驼峰字段');
+$liveArray = $liveResponse->toArray();
+$liveInfo = $liveResponse->toUserInfo();
+assert_true($liveArray['nickname'] === 'nick' && $liveArray['platform'] === 'dy', 'Live toArray 失败');
+assert_true($liveInfo instanceof Hlw\Collect\Types\UserInfo, 'Live toUserInfo 应返回 UserInfo 对象');
+assert_true($liveInfo->nickname === 'nick' && $liveInfo->platform === 'dy', 'Live toUserInfo 属性访问失败');
+assert_true($liveInfo->type === 'user', 'Live toUserInfo type 应为 user');
+assert_true($liveInfo->gender === 0, 'Live gender 女应返回 0');
+assert_true($liveInfo->total['follower_count'] === 1 && $liveInfo->total['liked_count'] === 4, 'Live total 统计字段失败');
+assert_true($liveInfo->toArray() === $liveArray, 'Live UserInfo toArray 应等于响应 toArray');
+assert_keys($liveArray, $normalizedUserKeys, 'Live toArray 字段不一致');
+assert_keys($liveArray['total'], $normalizedUserTotalKeys, 'Live toArray total 字段不一致');
+assert_no_camel_keys($liveArray, 'Live toArray 不应返回驼峰字段');
+$dyMaleInfo = Hlw\Collect\Dy\Live\User\ProfileResponse::parse([
+    'data' => [
+        'user_profile' => [
+            'base_info' => ['gender' => 1],
+        ],
+    ],
+]);
+assert_true($dyMaleInfo['gender'] === 1, 'Live gender 男应返回 1');
 
-$awemeResponse = new Hlw\Collect\Dy\Web\Aweme\PostResponse(['aweme_list' => [['aweme_id' => 'a1', 'desc' => 'd', 'statistics' => ['digg_count' => 2]]]]);
+$awemeResponse = new Hlw\Collect\Dy\Web\Aweme\PostResponse(['aweme_list' => [[
+    'aweme_id' => 'a1',
+    'desc' => 'd',
+    'create_time' => 1700000000,
+    'duration' => 1200,
+    'video' => [
+        'cover' => ['url_list' => ['cover']],
+        'play_addr' => ['url_list' => ['video']],
+        'width' => 720,
+        'height' => 1280,
+    ],
+    'share_url' => 'share',
+    'statistics' => ['digg_count' => 2, 'comment_count' => 3, 'share_count' => 4, 'collect_count' => 5, 'play_count' => 6],
+    'author' => [
+        'uid' => 'uid',
+        'sec_uid' => 'sec',
+        'short_id' => 'display',
+        'nickname' => 'nick',
+        'avatar_thumb' => ['url_list' => ['avatar']],
+    ],
+    'video_tag' => [['tag_id' => 't1', 'tag_name' => 'tag', 'level' => 1]],
+]]]);
 $aweme = $awemeResponse->toArray()[0];
-assert_true($aweme['aweme_id'] === 'a1' && $aweme['like_count'] === 2, 'Web aweme toArray 失败');
+assert_true($aweme['item_id'] === 'a1' && $aweme['total']['like_count'] === 2, 'Web aweme toArray 失败');
+assert_true($aweme['type'] === 'feed', 'Web aweme type 应为 feed');
+assert_keys($aweme, $normalizedFeedKeys, 'Web aweme 字段不一致');
+assert_keys($aweme['total'], $normalizedFeedTotalKeys, 'Web aweme total 字段不一致');
+assert_keys($aweme['author'], $normalizedAuthorKeys, 'Web aweme author 字段不一致');
 assert_true(!array_key_exists('awemeId', $aweme) && !array_key_exists('likeCount', $aweme), 'Web aweme 不应返回驼峰字段');
 assert_no_camel_keys($aweme, 'Web aweme 不应返回驼峰字段');
 
@@ -133,15 +261,35 @@ $ksInfoResponse = new Hlw\Collect\Ks\Mini\User\ProfileResponse([
             'kwaiId' => 'kwai',
             'userId' => 'uid',
             'name' => 'nick',
+            'user_sex' => 'F',
         ],
-        'ownerCount' => ['fan' => 3, 'follow' => 4, 'photo' => 5],
+        'ownerCount' => ['fan' => 3, 'follow' => 4, 'photo' => 5, 'like' => 6],
+        'cityName' => 'city',
     ],
 ]);
-assert_true($ksInfoResponse->toUserInfo()['name'] === 'nick', 'Ks toUserInfo 失败');
-assert_true($ksInfoResponse->toUserInfo()['user_id'] === 'uid' && $ksInfoResponse->toUserInfo()['fan_count'] === 3, 'Ks toUserInfo 下划线字段失败');
-assert_no_camel_keys($ksInfoResponse->toUserInfo(), 'Ks toUserInfo 不应返回驼峰字段');
+$ksInfo = $ksInfoResponse->toUserInfo();
+$ksArray = $ksInfoResponse->toArray();
+assert_true($ksInfo instanceof Hlw\Collect\Types\UserInfo, 'Ks toUserInfo 应返回 UserInfo 对象');
+assert_true($ksInfo->nickname === 'nick' && $ksInfo->platform === 'ks', 'Ks toUserInfo 属性访问失败');
+assert_true($ksInfo->type === 'user', 'Ks toUserInfo type 应为 user');
+assert_true($ksInfo->gender === 0, 'Ks gender 女应返回 0');
+assert_true($ksInfo->user_id === 'uid' && $ksInfo->total['follower_count'] === 3, 'Ks toUserInfo 下划线字段失败');
+assert_true($ksInfo->toArray() === $ksArray, 'Ks UserInfo toArray 应等于响应 toArray');
+assert_keys($ksArray, $normalizedUserKeys, 'Ks toArray 字段不一致');
+assert_keys($ksArray['total'], $normalizedUserTotalKeys, 'Ks toArray total 字段不一致');
+assert_same_keys($liveArray, $ksArray, 'Dy/Ks user_info 字段必须一致');
+assert_no_camel_keys($ksArray, 'Ks toArray 不应返回驼峰字段');
+$ksMaleInfo = Hlw\Collect\Ks\Mini\User\ProfileResponse::parse([
+    'userProfile' => [
+        'profile' => ['user_sex' => 'M'],
+    ],
+]);
+assert_true($ksMaleInfo['gender'] === 1, 'Ks gender 男应返回 1');
 
 $ksFeedResponse = new Hlw\Collect\Ks\Mini\Feed\ListResponse(['feeds' => [['photoId' => 'p1', 'caption' => 'title']]]);
-assert_true($ksFeedResponse->toArray()[0]['id'] === 'p1', 'Ks feed toArray 失败');
+$ksFeed = $ksFeedResponse->toArray()[0];
+assert_true($ksFeed['item_id'] === 'p1', 'Ks feed toArray 失败');
+assert_keys($ksFeed, $normalizedFeedKeys, 'Ks feed 字段不一致');
+assert_same_keys($aweme, $ksFeed, 'Dy/Ks feed 字段必须一致');
 
 echo "smoke ok\n";
