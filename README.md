@@ -186,7 +186,7 @@ SDK 对外归一化输出使用下划线字段，适合直接落库，例如：
 类型说明文件：
 
 - `Hlw\Collect\Types\UserInfoType`：用户信息字段类型，也是 `toUserInfo()` 返回的用户对象类型
-- `Hlw\Collect\Types\FeedItemType`：作品信息字段类型
+- `Hlw\Collect\Types\FeedItemType`：作品信息字段类型，也可以用 `fromArray()` 转成作品对象类型
 
 运行时查看字段类型：
 
@@ -196,6 +196,9 @@ use Hlw\Collect\Types\FeedItemType;
 
 $userSchema = UserInfoType::schema();
 $feedSchema = FeedItemType::schema();
+
+$feedObject = FeedItemType::fromArray($feedList[0]);
+echo $feedObject->platform;
 ```
 
 PHPStan/Psalm 中也可以导入数组类型：
