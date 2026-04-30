@@ -1,0 +1,5 @@
+vendor/
+tests/cookies*.txt
+tests/cookies*.text
+tests/*cookies*.txt
+tests/*cookies*.text

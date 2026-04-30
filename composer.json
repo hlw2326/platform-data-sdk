@@ -1,0 +1,13 @@
+{
+    "name": "hlw2326/platform-data-sdk",
+    "description": "PHP SDK for multi-platform data collection helpers.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "classmap": ["src/"]
+    },
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*"
+    }
+}
