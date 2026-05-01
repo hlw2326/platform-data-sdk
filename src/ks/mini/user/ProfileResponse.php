@@ -60,10 +60,10 @@ class ProfileResponse
             'gender' => self::normalizeGender($profile['user_sex'] ?? $profile['gender'] ?? ''),
             'city' => (string)($response['userProfile']['cityName'] ?? $profile['cityName'] ?? $profile['city'] ?? ''),
             'total' => [
-                'follower_count' => (int)($count['fan'] ?? $profile['fanCount'] ?? $profile['fansCount'] ?? 0),
-                'following_count' => (int)($count['follow'] ?? $profile['followCount'] ?? $profile['followingCount'] ?? 0),
-                'feed_count' => (int)($count['photo'] ?? $count['photo_public'] ?? $profile['photoCount'] ?? $profile['photoNum'] ?? 0),
-                'liked_count' => (int)($count['like'] ?? $profile['likeCount'] ?? $profile['likedCount'] ?? 0),
+                'fan_count' => (int)($count['fan'] ?? $profile['fanCount'] ?? $profile['fansCount'] ?? 0),
+                'follow_count' => (int)($count['follow'] ?? $profile['followCount'] ?? $profile['followingCount'] ?? 0),
+                'work_count' => (int)($count['photo'] ?? $count['photo_public'] ?? $profile['photoCount'] ?? $profile['photoNum'] ?? 0),
+                'like_count' => (int)($count['like'] ?? $profile['likeCount'] ?? $profile['likedCount'] ?? 0),
             ],
             'verified' => (bool)($profile['verified'] ?? $response['userProfile']['verified'] ?? false),
         ];

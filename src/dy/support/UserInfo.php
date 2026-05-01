@@ -190,10 +190,10 @@ class UserInfo
             'gender' => self::normalizeGender($obj['gender'] ?? 0),
             'city' => (string)($obj['city'] ?? ''),
             'total' => [
-                'follower_count' => (int)($obj['mplatform_followers_count'] ?? $obj['followerCount'] ?? $obj['follower_count'] ?? 0),
-                'following_count' => (int)($obj['followingCount'] ?? $obj['following_count'] ?? 0),
-                'feed_count' => (int)($obj['awemeCount'] ?? $obj['aweme_count'] ?? 0),
-                'liked_count' => (int)($obj['total_favorited'] ?? $obj['totalFavorited'] ?? 0),
+                'fan_count' => (int)($obj['mplatform_followers_count'] ?? $obj['followerCount'] ?? $obj['follower_count'] ?? $obj['fan_count'] ?? 0),
+                'follow_count' => (int)($obj['followingCount'] ?? $obj['following_count'] ?? $obj['follow_count'] ?? 0),
+                'work_count' => (int)($obj['awemeCount'] ?? $obj['aweme_count'] ?? $obj['work_count'] ?? 0),
+                'like_count' => (int)($obj['total_favorited'] ?? $obj['totalFavorited'] ?? $obj['like_count'] ?? 0),
             ],
             'verified' => $certLabel !== '',
         ];

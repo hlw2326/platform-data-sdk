@@ -68,10 +68,10 @@ class ProfileResponse
             'gender' => self::normalizeGender($base['gender'] ?? 0),
             'city' => (string)($base['city'] ?? $base['location_city'] ?? ''),
             'total' => [
-                'follower_count' => (int)($follow['follower_count'] ?? 0),
-                'following_count' => (int)($follow['following_count'] ?? 0),
-                'feed_count' => (int)($profile['aweme_count'] ?? $base['aweme_count'] ?? 0),
-                'liked_count' => (int)($profile['total_favorited'] ?? $base['total_favorited'] ?? 0),
+                'fan_count' => (int)($follow['follower_count'] ?? 0),
+                'follow_count' => (int)($follow['following_count'] ?? 0),
+                'work_count' => (int)($profile['aweme_count'] ?? $base['aweme_count'] ?? 0),
+                'like_count' => (int)($profile['total_favorited'] ?? $base['total_favorited'] ?? 0),
             ],
             'verified' => ($auth['verify_content'] ?? $base['custom_verify'] ?? $base['enterprise_verify_reason'] ?? '') !== '',
         ];

@@ -17,10 +17,10 @@ use JsonSerializable;
  *     gender: 0|1,
  *     city: string,
  *     total: array{
- *         follower_count: int,
- *         following_count: int,
- *         feed_count: int,
- *         liked_count: int
+ *         fan_count: int,
+ *         follow_count: int,
+ *         work_count: int,
+ *         like_count: int
  *     },
  *     verified: bool
  * }
@@ -36,10 +36,10 @@ use JsonSerializable;
  *     gender: 0|1,
  *     city: string,
  *     total: array{
- *         follower_count: int,
- *         following_count: int,
- *         feed_count: int,
- *         liked_count: int
+ *         fan_count: int,
+ *         follow_count: int,
+ *         work_count: int,
+ *         like_count: int
  *     },
  *     verified: bool
  * }
@@ -58,7 +58,7 @@ final class UserInfoType implements JsonSerializable
     public readonly string $avatar_url;
     public readonly int $gender;
     public readonly string $city;
-    /** @var array{follower_count:int, following_count:int, feed_count:int, liked_count:int} */
+    /** @var array{fan_count:int, follow_count:int, work_count:int, like_count:int} */
     public readonly array $total;
     public readonly bool $verified;
 
@@ -82,10 +82,10 @@ final class UserInfoType implements JsonSerializable
             'gender' => 'int:0|1',
             'city' => 'string',
             'total' => [
-                'follower_count' => 'int',
-                'following_count' => 'int',
-                'feed_count' => 'int',
-                'liked_count' => 'int',
+                'fan_count' => 'int',
+                'follow_count' => 'int',
+                'work_count' => 'int',
+                'like_count' => 'int',
             ],
             'verified' => 'bool',
         ];
