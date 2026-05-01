@@ -3,6 +3,7 @@
 require __DIR__ . '/../src/Dy.php';
 require __DIR__ . '/../src/Ks.php';
 require __DIR__ . '/../src/request/BaseRequest.php';
+require __DIR__ . '/../src/support/Redirect.php';
 require __DIR__ . '/../src/dy/support/Options.php';
 require __DIR__ . '/../src/dy/support/Redirect.php';
 require __DIR__ . '/../src/dy/support/InputParser.php';
@@ -82,6 +83,16 @@ function assert_same_keys(array $left, array $right, string $message): void
     }
 }
 
+function assert_private_option(object $object, string $key, mixed $expected, string $message): void
+{
+    $property = (new ReflectionObject($object))->getProperty('defaultOptions');
+    $property->setAccessible(true);
+    $options = $property->getValue($object);
+    if (($options[$key] ?? null) !== $expected) {
+        throw new RuntimeException($message . ': ' . json_encode($options, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+}
+
 $normalizedUserKeys = [
     'platform',
     'type',
@@ -103,7 +114,7 @@ $normalizedFeedKeys = [
     'item_id',
     'desc',
     'create_time',
-    'duration_ms',
+    'duration',
     'cover_url',
     'video_url',
     'share_url',
@@ -166,11 +177,24 @@ assert_no_camel_keys($feed, 'parseFeed 不应返回驼峰字段');
 $dyH5V1 = Dy::H5('a=b')->v1();
 $dyLiveV1 = Dy::Live('a=b')->v1();
 $dyWebV1 = Dy::Web('a=b')->v1();
+$dyUa = 'Mozilla/5.0 CustomUA';
+$dyLiveArrayV1 = Dy::Live(['cookies' => 'a=b', 'ua' => $dyUa])->v1();
+$dyLiveArgsV1 = Dy::Live('a=b', $dyUa)->v1();
+$dyWebArrayV1 = Dy::Web(['cookies' => 'a=b', 'ua' => $dyUa])->v1();
+$dyWebArgsV1 = Dy::Web('a=b', $dyUa)->v1();
 assert_true($dyH5V1->user instanceof Hlw\Collect\Dy\H5\User\Profile, 'Dy::H5 user 属性入口失败');
 assert_true($dyLiveV1->user instanceof Hlw\Collect\Dy\Live\User\Profile, 'Dy::Live user 属性入口失败');
 assert_true($dyWebV1->user instanceof Hlw\Collect\Dy\Web\User\Profile, 'Dy::Web user 属性入口失败');
 assert_true($dyWebV1->aweme instanceof Hlw\Collect\Dy\Web\Aweme\Aweme, 'Dy::Web aweme 属性入口失败');
 assert_true(method_exists($dyWebV1->aweme, 'post'), 'Dy::Web aweme post 入口失败');
+assert_private_option($dyLiveArrayV1->user, 'cookies', 'a=b', 'Dy::Live array cookies 入口失败');
+assert_private_option($dyLiveArrayV1->user, 'userAgent', $dyUa, 'Dy::Live array ua 入口失败');
+assert_private_option($dyLiveArgsV1->user, 'cookies', 'a=b', 'Dy::Live 参数 cookies 入口失败');
+assert_private_option($dyLiveArgsV1->user, 'userAgent', $dyUa, 'Dy::Live 参数 ua 入口失败');
+assert_private_option($dyWebArrayV1->user, 'userAgent', $dyUa, 'Dy::Web user array ua 入口失败');
+assert_private_option($dyWebArrayV1->aweme, 'userAgent', $dyUa, 'Dy::Web aweme array ua 入口失败');
+assert_private_option($dyWebArgsV1->user, 'cookies', 'a=b', 'Dy::Web 参数 cookies 入口失败');
+assert_private_option($dyWebArgsV1->user, 'userAgent', $dyUa, 'Dy::Web 参数 ua 入口失败');
 assert_true(new Hlw\Collect\Dy\H5\Request() instanceof Hlw\Collect\Request\BaseRequest, 'Dy H5 Request 入口失败');
 assert_true(new Hlw\Collect\Dy\Live\Request() instanceof Hlw\Collect\Request\BaseRequest, 'Dy Live Request 入口失败');
 assert_true(new Hlw\Collect\Dy\Web\Request() instanceof Hlw\Collect\Request\BaseRequest, 'Dy Web Request 入口失败');
@@ -181,6 +205,9 @@ assert_true(method_exists($ksV1->feed, 'list'), 'Ks::Mini feed list 入口失败
 assert_true(new Hlw\Collect\Ks\Mini\Request() instanceof Hlw\Collect\Request\BaseRequest, 'Ks Mini Request 入口失败');
 assert_true(Hlw\Collect\Dy\Support\InputParser::secUid('https://www.iesdouyin.com/share/user/MS4wLjABtest?sec_uid=MS4wLjABfromQuery') === 'MS4wLjABfromQuery', 'secUid 解析失败');
 assert_true(Hlw\Collect\Dy\Support\InputParser::awemeId('https://www.douyin.com/video/1234567890') === '1234567890', 'awemeId 解析失败');
+$dyUserHtml = '"userInfoRes":{"user_info":{"sec_uid":"sec","uid":"uid","unique_id":"display","nickname":"nick","signature":"bio","gender":1,"avatar_thumb":{"url_list":["avatar"]},"city":"city","mplatform_followers_count":9,"following_count":8,"aweme_count":7,"total_favorited":6,"account_cert_info":"{\"label_text\":\"verified\"}"}},"secUid":"sec"';
+$dyUserInfo = Hlw\Collect\Dy\Support\UserInfo::parse($dyUserHtml);
+assert_true(is_array($dyUserInfo) && $dyUserInfo['nickname'] === 'nick' && $dyUserInfo['verified'] === true, 'Dy UserInfo HTML 解析失败');
 
 $liveResponse = new Hlw\Collect\Dy\Live\User\ProfileResponse([
     'data' => [
@@ -260,6 +287,9 @@ assert_true($feedItem->platform === 'dy' && $feedItem->item_id === 'a1', 'FeedIt
 assert_true($feedItem->total['like_count'] === 2 && $feedItem->author['nickname'] === 'nick', 'FeedItemType 嵌套字段失败');
 assert_true($feedItem->toArray() === $aweme, 'FeedItemType toArray 应等于原数组');
 assert_true(json_decode(json_encode($feedItem, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), true) === $aweme, 'FeedItemType jsonSerialize 失败');
+$dirtyAwemeResponse = new Hlw\Collect\Dy\Web\Aweme\PostResponse(['aweme_list' => [null, 'bad', ['aweme_id' => 'a2']]]);
+$dirtyAwemeList = $dirtyAwemeResponse->toArray();
+assert_true(count($dirtyAwemeList) === 1 && $dirtyAwemeList[0]['item_id'] === 'a2', 'Web aweme 应跳过异常列表项');
 
 $ksInfoResponse = new Hlw\Collect\Ks\Mini\User\ProfileResponse([
     'userProfile' => [

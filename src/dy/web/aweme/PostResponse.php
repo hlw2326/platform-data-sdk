@@ -26,7 +26,19 @@ class PostResponse
             return [];
         }
 
-        return array_map(fn($aweme) => self::parseAweme($aweme), $this->raw['aweme_list'] ?? []);
+        $awemeList = $this->raw['aweme_list'] ?? [];
+        if (!is_array($awemeList)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($awemeList as $aweme) {
+            if (is_array($aweme)) {
+                $result[] = self::parseAweme($aweme);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -57,7 +69,7 @@ class PostResponse
             'item_id' => (string)($aweme['aweme_id'] ?? $aweme['group_id'] ?? ''),
             'desc' => (string)($aweme['desc'] ?? $aweme['caption'] ?? ''),
             'create_time' => (int)($aweme['create_time'] ?? 0),
-            'duration_ms' => (int)($aweme['duration'] ?? $video['duration'] ?? 0),
+            'duration' => (int)($aweme['duration'] ?? $video['duration'] ?? 0),
             'cover_url' => self::firstUrl($video['cover'] ?? []) ?: self::firstUrl($video['origin_cover'] ?? []),
             'video_url' => self::firstUrl($video['play_addr'] ?? []) ?: self::firstUrl($video['play_addr_h264'] ?? []),
             'share_url' => (string)($aweme['share_url'] ?? $aweme['share_info']['share_url'] ?? ''),

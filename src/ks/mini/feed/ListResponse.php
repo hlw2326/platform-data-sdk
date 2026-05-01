@@ -52,7 +52,7 @@ class ListResponse
             'item_id' => (string)($feed['photoId'] ?? $feed['id'] ?? ''),
             'desc' => (string)($feed['caption'] ?? $feed['title'] ?? ''),
             'create_time' => (int)floor(($feed['timestamp'] ?? 0) / 1000),
-            'duration_ms' => (int)($feed['duration'] ?? 0),
+            'duration' => (int)($feed['duration'] ?? 0),
             'cover_url' => self::firstUrl($feed['coverUrls'] ?? []) ?: self::firstUrl($feed['webpCoverUrls'] ?? []),
             'video_url' => self::firstUrl($feed['mainMvUrls'] ?? []),
             'share_url' => (string)($feed['shareUrl'] ?? $feed['share_url'] ?? $feed['webShareInfo']['shareUrl'] ?? ''),

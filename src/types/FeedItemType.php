@@ -11,7 +11,7 @@ use JsonSerializable;
  *     item_id: string,
  *     desc: string,
  *     create_time: int,
- *     duration_ms: int,
+ *     duration: int,
  *     cover_url: string,
  *     video_url: string,
  *     share_url: string,
@@ -44,7 +44,7 @@ use JsonSerializable;
  *     item_id: string,
  *     desc: string,
  *     create_time: int,
- *     duration_ms: int,
+ *     duration: int,
  *     cover_url: string,
  *     video_url: string,
  *     share_url: string,
@@ -81,7 +81,7 @@ final class FeedItemType implements JsonSerializable
     public readonly string $item_id;
     public readonly string $desc;
     public readonly int $create_time;
-    public readonly int $duration_ms;
+    public readonly int $duration;
     public readonly string $cover_url;
     public readonly string $video_url;
     public readonly string $share_url;
@@ -109,7 +109,7 @@ final class FeedItemType implements JsonSerializable
             'item_id' => 'string',
             'desc' => 'string',
             'create_time' => 'int',
-            'duration_ms' => 'int',
+            'duration' => 'int',
             'cover_url' => 'string',
             'video_url' => 'string',
             'share_url' => 'string',
@@ -144,7 +144,7 @@ final class FeedItemType implements JsonSerializable
         $this->item_id = $data['item_id'];
         $this->desc = $data['desc'];
         $this->create_time = $data['create_time'];
-        $this->duration_ms = $data['duration_ms'];
+        $this->duration = $data['duration'];
         $this->cover_url = $data['cover_url'];
         $this->video_url = $data['video_url'];
         $this->share_url = $data['share_url'];

@@ -51,7 +51,7 @@ class V1
 
     public function getUserProfileByInput(string $input, array $options = []): mixed
     {
-        $eid = $this->requireEid($input);
+        $eid = InputParser::eid($input);
         return $this->getUserProfile($eid, $options);
     }
 
@@ -94,8 +94,4 @@ class V1
         return ProfileResponse::parse($response);
     }
 
-    private function requireEid(string $input): string
-    {
-        return InputParser::eid($input);
-    }
 }

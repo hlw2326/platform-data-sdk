@@ -13,73 +13,134 @@ class UserInfo
      */
     public static function parse(string $html): ?array
     {
-        if (preg_match_all('/self\.__pace_f\.push\(\[\d+,\s*"(\d+:\[.{20,})"\]\)/sU', $html, $matches)) {
-            foreach ($matches[1] as $match) {
-                if (!str_contains($match, 'nickname')) {
-                    continue;
-                }
-                $raw = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', fn($m) => html_entity_decode('&#x' . $m[1] . ';', ENT_QUOTES | ENT_HTML5, 'UTF-8'), $match);
-                $raw = str_replace(['\\"', '\\\\'], ['"', '\\'], $raw);
-                $userIdx = strpos($raw, '"userInfo":{');
-                if ($userIdx === false) {
-                    continue;
-                }
-                $start = strpos($raw, '{', $userIdx + 10);
-                $json = self::sliceJsonObject($raw, $start);
-                $data = $json !== null ? json_decode($json, true) : null;
-                if (is_array($data) && isset($data['nickname'])) {
-                    return self::normalize($data);
-                }
-            }
+        return self::parsePaceUserInfoPush($html)
+            ?? self::parsePaceNicknamePush($html)
+            ?? self::parseUserInfoRes($html);
+    }
+
+    /**
+     * @return UserInfoArray|null
+     */
+    private static function parsePaceUserInfoPush(string $html): ?array
+    {
+        if (!preg_match_all('/self\.__pace_f\.push\(\[\d+,\s*"(\d+:\[.{20,})"\]\)/sU', $html, $matches)) {
+            return null;
         }
 
-        if (preg_match_all('/self\.__pace_f\.push\(\[\d+,\s*"([^"]{100,})"\]/sU', $html, $matches)) {
-            foreach ($matches[1] as $match) {
-                if (!str_contains($match, 'nickname')) {
-                    continue;
-                }
-                $raw = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', fn($m) => html_entity_decode('&#x' . $m[1] . ';', ENT_QUOTES | ENT_HTML5, 'UTF-8'), $match);
-                $decoded = urldecode($raw);
-                $idx = strpos($decoded, '"nickname"');
-                if ($idx === false) {
-                    continue;
-                }
-                $start = $idx;
-                while ($start > 0 && $decoded[$start] !== '{') {
-                    $start--;
-                }
-                $json = self::sliceJsonObject($decoded, $start);
-                $data = $json !== null ? json_decode($json, true) : null;
-                if (is_array($data) && isset($data['nickname'])) {
-                    return self::normalize($data);
-                }
+        foreach ($matches[1] as $match) {
+            if (!str_contains($match, 'nickname')) {
+                continue;
             }
-        }
 
-        if (preg_match('/"userInfoRes"\s*:\s*(\{[\s\S]*?\})\s*,\s*"secUid"/', $html, $match)) {
-            $data = json_decode(str_replace('u002F', '/', $match[1]), true);
-            $user = $data['user_info'] ?? null;
-            if (is_array($user) && isset($user['nickname'])) {
-                return self::normalize([
-                    'sec_uid' => $user['sec_uid'] ?? '',
-                    'uid' => $user['uid'] ?? '',
-                    'unique_id' => $user['unique_id'] ?? '',
-                    'short_id' => $user['short_id'] ?? '',
-                    'nickname' => $user['nickname'] ?? '',
-                    'gender' => $user['gender'] ?? 0,
-                    'desc' => $user['signature'] ?? '',
-                    'avatar_url' => $user['avatar_thumb']['url_list'][0] ?? '',
-                    'city' => $user['city'] ?? '',
-                    'mplatform_followers_count' => $user['mplatform_followers_count'] ?? 0,
-                    'following_count' => $user['following_count'] ?? 0,
-                    'aweme_count' => $user['aweme_count'] ?? 0,
-                    'total_favorited' => $user['total_favorited'] ?? 0,
-                    'account_cert_info' => $user['account_cert_info'] ?? null,
-                ]);
+            $raw = self::decodeUnicodeEscapes($match);
+            $raw = str_replace(['\\"', '\\\\'], ['"', '\\'], $raw);
+            $userIdx = strpos($raw, '"userInfo":{');
+            if ($userIdx === false) {
+                continue;
+            }
+
+            $data = self::decodeJsonObjectAt($raw, strpos($raw, '{', $userIdx + 10));
+            if (is_array($data) && isset($data['nickname'])) {
+                return self::normalize($data);
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return UserInfoArray|null
+     */
+    private static function parsePaceNicknamePush(string $html): ?array
+    {
+        if (!preg_match_all('/self\.__pace_f\.push\(\[\d+,\s*"([^"]{100,})"\]/sU', $html, $matches)) {
+            return null;
+        }
+
+        foreach ($matches[1] as $match) {
+            if (!str_contains($match, 'nickname')) {
+                continue;
+            }
+
+            $decoded = urldecode(self::decodeUnicodeEscapes($match));
+            $idx = strpos($decoded, '"nickname"');
+            if ($idx === false) {
+                continue;
+            }
+
+            $data = self::decodeJsonObjectAt($decoded, self::findObjectStart($decoded, $idx));
+            if (is_array($data) && isset($data['nickname'])) {
+                return self::normalize($data);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return UserInfoArray|null
+     */
+    private static function parseUserInfoRes(string $html): ?array
+    {
+        if (!preg_match('/"userInfoRes"\s*:\s*(\{[\s\S]*?\})\s*,\s*"secUid"/', $html, $match)) {
+            return null;
+        }
+
+        $data = json_decode(str_replace('u002F', '/', $match[1]), true);
+        $user = $data['user_info'] ?? null;
+        if (!is_array($user) || !isset($user['nickname'])) {
+            return null;
+        }
+
+        return self::normalize([
+            'sec_uid' => $user['sec_uid'] ?? '',
+            'uid' => $user['uid'] ?? '',
+            'unique_id' => $user['unique_id'] ?? '',
+            'short_id' => $user['short_id'] ?? '',
+            'nickname' => $user['nickname'] ?? '',
+            'gender' => $user['gender'] ?? 0,
+            'desc' => $user['signature'] ?? '',
+            'avatar_url' => $user['avatar_thumb']['url_list'][0] ?? '',
+            'city' => $user['city'] ?? '',
+            'mplatform_followers_count' => $user['mplatform_followers_count'] ?? 0,
+            'following_count' => $user['following_count'] ?? 0,
+            'aweme_count' => $user['aweme_count'] ?? 0,
+            'total_favorited' => $user['total_favorited'] ?? 0,
+            'account_cert_info' => $user['account_cert_info'] ?? null,
+        ]);
+    }
+
+    private static function decodeUnicodeEscapes(string $raw): string
+    {
+        $decoded = preg_replace_callback(
+            '/\\\\u([0-9a-fA-F]{4})/',
+            fn($match) => html_entity_decode('&#x' . $match[1] . ';', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            $raw
+        );
+
+        return $decoded ?? $raw;
+    }
+
+    private static function decodeJsonObjectAt(string $raw, int|false $start): ?array
+    {
+        $json = self::sliceJsonObject($raw, $start);
+        if ($json === null) {
+            return null;
+        }
+
+        $data = json_decode($json, true);
+        return is_array($data) ? $data : null;
+    }
+
+    private static function findObjectStart(string $raw, int $from): int|false
+    {
+        for ($start = $from; $start >= 0; $start--) {
+            if ($raw[$start] === '{') {
+                return $start;
+            }
+        }
+
+        return false;
     }
 
     private static function sliceJsonObject(string $raw, int|false $start): ?string

@@ -14,14 +14,14 @@ class Dy
         return new H5($options);
     }
 
-    public static function Live(array|string $options = []): Live
+    public static function Live(array|string $options = [], ?string $ua = null): Live
     {
-        return new Live($options);
+        return new Live($options, $ua);
     }
 
-    public static function Web(array|string $options = []): Web
+    public static function Web(array|string $options = [], ?string $ua = null): Web
     {
-        return new Web($options);
+        return new Web($options, $ua);
     }
 
     public static function aBogus(string $params, string $ua): string

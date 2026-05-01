@@ -55,9 +55,14 @@ use Hlw\Collect\Dy;
 
 $input = '抖音分享文本或用户主页链接';
 $cookies = trim(file_get_contents(__DIR__ . '/tests/cookies_dy_web.text'));
+$ua = 'Mozilla/5.0 ...';
 
 $dyLiveV1 = Dy::Live($cookies)->v1();
 $dyWebV1 = Dy::Web($cookies)->v1();
+
+// 需要自定义 UA 时，两种写法都支持：
+$dyLiveV1 = Dy::Live(['cookies' => $cookies, 'ua' => $ua])->v1();
+$dyWebV1 = Dy::Web($cookies, $ua)->v1();
 
 $userInfo = $dyLiveV1->user->profile($input)->toArray();
 $userObject = $dyLiveV1->user->profile($input)->toUserInfo();
@@ -156,7 +161,7 @@ SDK 对外归一化输出使用下划线字段，适合直接落库，例如：
             'item_id' => '作品ID',
             'desc' => '作品文案',
             'create_time' => 1700000000,
-            'duration_ms' => 12000,
+            'duration' => 12000,
             'cover_url' => 'https://...',
             'video_url' => 'https://...',
             'share_url' => 'https://...',
